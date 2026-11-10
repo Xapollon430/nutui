@@ -132,6 +132,9 @@ export default create({
     }
 
     const onClick = (option: MenuItemOption) => {
+      if (props.disabled) {
+        return
+      }
       state.showPopup = false
       if (option.value !== props.modelValue) {
         emit('update:modelValue', option.value)

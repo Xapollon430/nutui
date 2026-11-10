@@ -327,3 +327,40 @@ test('Menu: menu item open and close events: should be both emitted', async () =
 
   wrapper.unmount()
 })
+
+test('Menu: disabling an open item prevents selection until enabled again', async () => {
+  const wrapper = mount({
+    components: { NutMenu: Menu, NutMenuItem: MenuItem },
+    template: `
+      <nut-menu>
+        <nut-menu-item v-model="value" :disabled="disabled" :options="options" />
+      </nut-menu>
+    `,
+    data: () => ({ value: 0, disabled: false, options: options1 })
+  })
+
+  await nextTick()
+  await wrapper.find('.nut-menu__item').trigger('click')
+  const item = wrapper.findComponent(MenuItem)
+  expect(wrapper.find('.nut-menu__item').classes()).toContain('active')
+
+  await wrapper.setData({ disabled: true })
+  expect(wrapper.find('.nut-menu__item').classes()).toContain('disabled')
+  const option = wrapper.findAll('.nut-menu-item__option')[1]
+  await option.trigger('click')
+  await option.trigger('click')
+
+  expect(wrapper.vm.value).toBe(0)
+  expect(item.emitted('update:modelValue')).toBeUndefined()
+  expect(item.emitted('change')).toBeUndefined()
+  expect(wrapper.find('.nut-menu__item').classes()).toContain('active')
+
+  await wrapper.setData({ disabled: false })
+  await option.trigger('click')
+  expect(wrapper.vm.value).toBe(1)
+  expect(item.emitted('update:modelValue')).toEqual([[1]])
+  expect(item.emitted('change')).toEqual([[1]])
+  expect(wrapper.find('.nut-menu__item').classes()).not.toContain('active')
+
+  wrapper.unmount()
+})
